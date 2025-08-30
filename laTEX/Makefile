@@ -16,15 +16,17 @@ LATEX_ARGS = -interaction=nonstopmode -output-directory=$(OUTPUT_DIR)
 all: $(OUTPUT_DIR)/$(FILE_NAME).pdf cleanup
 
 # Create output directory just if it's not already created.
-$(OUTPUT_DIR):
+# Compile the LaTeX document to PDF.
+$(OUTPUT_DIR)/$(FILE_NAME).pdf: $(TEXFILE) | $(OUTPUT_DIR)/
+	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
+	-$(MAKE) bib
+	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
+	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
+
+$(OUTPUT_DIR)/:
 	mkdir -p $(OUTPUT_DIR)
 
-# Compile the LaTeX document to PDF.
-$(OUTPUT_DIR)/$(FILE_NAME).pdf: $(TEXFILE) $(BIBFILE) | $(OUTPUT_DIR)
-	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
-	$(MAKE) bib
-	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
-	$(LATEX) $(LATEX_ARGS) $(TEXFILE)
+$(OUTPUT_DIR): $(OUTPUT_DIR)/$(FILE_NAME).pdf
 
 # Run Bibtex alone
 bib: | $(OUTPUT_DIR)
@@ -49,13 +51,14 @@ view: $(OUTPUT_DIR)/$(FILE_NAME).pdf
 		echo "Could not find a suitable PDF viewer command."; \
 	fi
 
-# Continuous Compilation in background
+# Continuous Compilation in background (proccess in the back)
 background:
 	@echo "Starting latexmk in background..."
 	@latexmk -pdf -pvc -interaction=nonstopmode -output-directory=$(OUTPUT_DIR) $(TEXFILE) > latex.log 2>&1 &
 	@echo "latexmk running in background. Output at latex.log."
 	@echo "Use 'pkill latexmk' to stop or 'make kill'."
 
+# Continuopus Compilation in foreground (current terminal)
 live:
 	@echo "Starting latexmk.."
 	@latexmk -pdf -pvc -f -interaction=nonstopmode -output-directory=$(OUTPUT_DIR) $(TEXFILE)
